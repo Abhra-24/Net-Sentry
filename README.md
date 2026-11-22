@@ -25,23 +25,8 @@ GROQ_API_KEY=your-key
 
 Then restart NetSentry and select **Add AI explanation** before scanning. When selected, the target IP and observed service details are sent to Groq. The API key stays on the backend and is never sent to the browser.
 
-## Core ML working
-
-NetSentry includes a small, local logistic-regression model for triage. It is implemented in `backend/app.py` with Python’s standard library, so it does not require scikit-learn or a downloaded model.
-
-At startup, the model trains on eight embedded example profiles with lower- or higher-exposure labels. After a scan, it receives four values from the observed results:
-
-- total open TCP ports;
-- ports assigned higher local exposure weights;
-- recognized legacy or administration ports; and
-- recognized SSH or HTTPS entry points.
-
-The model normalizes those values against the averages in its example profiles, combines them with learned weights, and converts the result into a 0–100 review score. The dashboard shows the score, whether the review signal is lower or elevated, and how each input affected the result.
-
-This is a transparent prioritization baseline, not a vulnerability detector. The examples are not CVE records, the score is not a probability of compromise, and the model does not inspect software versions, configuration, logins, application behavior, or UDP services.
-
 ## What the report means
-
+   
 - Scans are limited to private and local-network IP addresses.
 - The built-in fallback checks TCP ports only. UDP, application behavior, login security, and confirmed CVEs are outside its scope.
 - Open ports and the exposure score are review signals, not proof that a vulnerability exists.
