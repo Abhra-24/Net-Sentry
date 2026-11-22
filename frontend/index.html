@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102d30">
+  <title>NetSentry — Local Network Check</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="NetSentry home"><span class="brand-mark">N</span><span>NETSENTRY</span></a>
+      <div class="connection"><span class="status-dot" id="health-dot"></span><span id="health-label">Starting scanner…</span></div>
+    </header>
+
+    <section class="intro" id="top">
+      <p class="eyebrow">LOCAL NETWORK SECURITY CHECK</p>
+      <h1>Check what’s open.</h1>
+      <p class="lead">Enter a private or local IP address to scan its TCP ports and get clear next steps.</p>
+    </section>
+
+    <section class="scan-card" aria-labelledby="scan-title">
+      <div class="scan-heading"><div><p class="eyebrow">START A SCAN</p><h2 id="scan-title">Which device should we check?</h2></div><span class="scope-pill">Private / local IPs only</span></div>
+      <form id="scan-form">
+        <label for="target">Device IP address</label>
+        <div class="input-row"><input id="target" name="target" placeholder="Example: 192.168.1.25" autocomplete="off" spellcheck="false" required><button id="scan-button" type="submit"><span>Run quick scan</span><span aria-hidden="true">→</span></button></div>
+        <div class="form-foot"><span>Quick scan · common TCP ports</span><span>Results stay on this computer</span></div>
+        <label class="full-scan-option"><input type="checkbox" id="full-scan"><span><strong>Scan all 65,535 TCP ports</strong><small>Can take about a minute. The quick scan checks common ports and popular high ports.</small></span></label>
+        <label class="ai-optin"><input type="checkbox" id="use-ai"><span><strong>Add AI explanation</strong><small id="ai-optin-note">Optional. Sends the target IP and observed service details to Groq.</small></span></label>
+        <p class="error" id="form-error" role="alert"></p>
+      </form>
+    </section>
+
+    <section id="progress" class="progress-card" hidden aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span><div><strong id="progress-title">Scanning device…</strong><p id="progress-detail">Checking all TCP ports. This can take a little while.</p></div>
+    </section>
+
+    <section id="results" hidden>
+      <div class="results-heading"><div><p class="eyebrow">SCAN REPORT</p><h2>Here’s what we found</h2><p class="report-meta" id="report-meta"></p></div><div class="report-buttons"><button class="button-secondary" id="print-report" type="button">Create PDF report</button></div></div>
+
+      <div class="summary-grid">
+        <article class="summary-card risk-card"><span class="card-label">EXPOSURE LEVEL</span><strong id="risk-level">—</strong><small id="risk-score">Risk score — / 99</small></article>
+        <article class="summary-card"><span class="card-label">OPEN NETWORK DOORS</span><strong id="open-count">—</strong><small>Services responding on this device</small></article>
+        <article class="summary-card"><span class="card-label">AUTOMATED REVIEW</span><strong id="ml-signal">—</strong><small id="ml-score">Review score, not a diagnosis</small></article>
+      </div>
+
+      <article class="report-card ml-card">
+        <details id="ml-details">
+          <summary class="card-heading"><div><p class="eyebrow">OPTIONAL DETAIL</p><h3>How the automated review reached this result</h3></div><span id="ml-result-badge" class="report-badge">REVIEW SIGNAL</span></summary>
+          <div class="ml-body">
+            <p class="ml-summary" id="ml-summary"></p>
+            <div class="ml-visual" role="group" aria-label="Visual walkthrough of the machine learning result">
+              <div class="ml-flow">
+                <div class="ml-flow-step"><span>1 · INPUT</span><strong>Scan signals</strong><small>Four counts from this scan</small></div>
+                <span class="ml-flow-arrow" aria-hidden="true">→</span>
+                <div class="ml-flow-step"><span>2 · COMPARE</span><strong>Example profiles</strong><small>Compared with 8 built-in examples</small></div>
+                <span class="ml-flow-arrow" aria-hidden="true">→</span>
+                <div class="ml-flow-step"><span>3 · RESULT</span><strong id="ml-flow-score">—/100</strong><small id="ml-flow-signal">Review signal · not a probability</small></div>
+              </div>
+              <div class="ml-score-meter">
+                <div class="ml-meter-label"><strong>Model review score</strong><span id="ml-meter-value">— / 100</span></div>
+                <div class="ml-meter-track" id="ml-score-track" role="meter" aria-label="Machine learning review score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="ml-score-fill"></span></div>
+                <div class="ml-meter-scale"><span>Lower</span><span>Higher</span></div>
+              </div>
+            </div>
+            <div class="ml-feature-grid" id="ml-feature-grid"></div>
+            <div class="ml-training"><strong>About this model</strong><p id="ml-training-note"></p><p id="ml-caveat"></p></div>
+          </div>
+        </details>
+      </article>
+
+      <article class="report-card">
+        <div class="card-heading"><div><p class="eyebrow">PLAIN-LANGUAGE SUMMARY</p><h3 id="analysis-title">Analyst report</h3></div><span id="analysis-status" class="report-badge">LOCAL REPORT</span></div>
+        <p class="analysis-summary" id="analysis-summary"></p>
+        <div class="analysis-columns"><div><h4>Why this matters</h4><ul id="analysis-reasoning"></ul></div><div><h4>What to do next</h4><ul id="analysis-actions"></ul></div></div>
+        <p class="caveat" id="analysis-caveats"></p>
+      </article>
+
+      <article class="report-card findings-card">
+        <div class="card-heading"><div><p class="eyebrow">THINGS TO REVIEW</p><h3>What may need attention</h3></div><span class="muted-note">A reachable network door is a warning sign, not proof of a security problem.</span></div>
+        <div id="findings-list" class="findings-list"></div>
+      </article>
+
+      <article class="report-card inventory-card">
+        <div class="card-heading"><div><p class="eyebrow">WHAT WAS FOUND</p><h3>Network services</h3></div><span id="table-meta" class="muted-note"></span></div>
+        <div class="table-wrap"><table><thead><tr><th>NETWORK DOOR</th><th>SERVICE</th><th>ATTENTION LEVEL</th></tr></thead><tbody id="ports-table"></tbody></table></div>
+      </article>
+
+      <article class="report-card glossary-card">
+        <div class="card-heading"><div><p class="eyebrow">PLAIN LANGUAGE</p><h3>Terms used in this report</h3></div></div>
+        <dl class="glossary">
+          <div><dt>Network door (port)</dt><dd>A numbered connection that a device may leave open for a service.</dd></div>
+          <div><dt>TCP</dt><dd>The common connection method checked by this scan.</dd></div>
+          <div><dt>Service</dt><dd>A program listening for network connections, such as a web server or file sharing.</dd></div>
+          <div><dt>Automated review</dt><dd>A small learning model that helps sort results for follow-up. It is not proof that a device is unsafe.</dd></div>
+          <div><dt>AI explanation</dt><dd>An optional plain-language summary from Groq based only on the services found.</dd></div>
+        </dl>
+      </article>
+    </section>
+
+    <footer><span>NETSENTRY</span><span>Scan only devices you own or have permission to assess.</span></footer>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
