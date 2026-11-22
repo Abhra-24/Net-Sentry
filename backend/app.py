@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import concurrent.futures
+import csv
 import ipaddress
 import json
 import math
@@ -122,13 +123,27 @@ class LocalLogisticRegression:
 
 
 def build_ml_model():
-    """Train a small illustrative triage model; it is not a vulnerability detector."""
-    # Embedded examples provide a lightweight local baseline, not a CVE dataset.
-    training_features = [
-        [0, 0, 0, 0], [1, 0, 0, 1], [2, 0, 0, 1], [1, 1, 1, 0],
-        [2, 1, 1, 0], [3, 2, 2, 0], [4, 2, 3, 1], [6, 3, 4, 0],
-    ]
-    training_labels = [0, 0, 0, 0, 1, 1, 1, 1]
+    """Train the local triage model from the clearly labeled synthetic dataset."""
+    dataset_path = ROOT.parent / "data" / "synthetic_scan_profiles.csv"
+    training_features = []
+    training_labels = []
+    try:
+        with dataset_path.open(newline="", encoding="utf-8") as handle:
+            for row in csv.DictReader(handle):
+                training_features.append([
+                    int(row["open_tcp_ports"]),
+                    int(row["high_signal_ports"]),
+                    int(row["legacy_or_admin_ports"]),
+                    int(row["encrypted_entry_points"]),
+                ])
+                training_labels.append(int(row["higher_exposure_label"]))
+    except (OSError, KeyError, ValueError):
+        # Keep the dashboard usable if the optional demo dataset is unavailable.
+        training_features = [
+            [0, 0, 0, 0], [1, 0, 0, 1], [2, 0, 0, 1], [1, 1, 1, 0],
+            [2, 1, 1, 0], [3, 2, 2, 0], [4, 2, 3, 1], [6, 3, 4, 0],
+        ]
+        training_labels = [0, 0, 0, 0, 1, 1, 1, 1]
     model = LocalLogisticRegression()
     model.fit(training_features, training_labels)
     return model

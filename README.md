@@ -25,12 +25,27 @@ GROQ_API_KEY=your-key
 
 Then restart NetSentry and select **Add AI explanation** before scanning. When selected, the target IP and observed service details are sent to Groq. The API key stays on the backend and is never sent to the browser.
 
+## Core ML working
+
+NetSentry includes a small, local logistic-regression model for triage. It is implemented in `backend/app.py` with Python’s standard library, so it does not require scikit-learn or a downloaded model. The training rows are stored in `data/synthetic_scan_profiles.csv`.
+
+At startup, the model loads 20 clearly labeled synthetic demonstration profiles with lower- or higher-exposure labels. If the CSV is unavailable, it uses a small embedded fallback. After a scan, it receives four values from the observed results:
+
+- total open TCP ports;
+- ports assigned higher local exposure weights;
+- recognized legacy or administration ports; and
+- recognized SSH or HTTPS entry points.
+
+The model standardizes those values, combines them with learned weights, and converts the result into a 0–100 review score. This is a transparent prioritization baseline, not a vulnerability detector. The synthetic rows are fabricated demonstration data, not real device measurements or CVE records. The score is not a probability of compromise.
+
+The project theory outline, including the dataset methodology and team-role template, is in [PROJECT_THEORY.md](PROJECT_THEORY.md).
+
 ## What the report means
    
 - Scans are limited to private and local-network IP addresses.
 - The built-in fallback checks TCP ports only. UDP, application behavior, login security, and confirmed CVEs are outside its scope.
 - Open ports and the exposure score are review signals, not proof that a vulnerability exists.
-- ML triage is a lightweight standard-library logistic-regression baseline trained from a small embedded example set. It helps prioritize review and is not a calibrated chance of compromise.
+- ML triage is a lightweight standard-library logistic-regression baseline trained from the synthetic demonstration dataset. It helps prioritize review and is not a calibrated chance of compromise.
 - Results are kept in memory for up to one hour. Download or print a report before closing the app if you need to keep it.
 
 Only scan devices you own or have permission to assess.
